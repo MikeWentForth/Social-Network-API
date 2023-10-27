@@ -9,11 +9,16 @@ app.use(express.json());
 // Mongoose configuration
 mongoose.set("strictQuery", false);
 // Define the database URL to connect to. XXXXXXXXXXXXXXXXXXX
-const mongoDB = "mongodb+srv://themikewallace:8044Chip@mikesneverendingcluster.cnzasg0.mongodb.net/?retryWrites=true&w=majority";
+const connectionString =
+  process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Social-Network-API';
+
 // Wait for database to connect, logging an error if there is a problem
 main().catch((err) => console.log(err));
 async function main() {
-  await mongoose.connect(mongoDB);
+  await mongoose.connect(connectionString, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 }
 
 // SCHEMAS
@@ -120,7 +125,6 @@ const thoughtSchema = new mongoose.Schema({
         required: true
     },
     reactions:
-    
       // Array of nested documents created with the reactionSchema  XXXXXXXX
       [reactionSchema]
   },{
@@ -296,16 +300,6 @@ app.put('/api/thoughts/:id', async (req,res) => {
     res.json("Thought updated.")
 });
 
-// DELETE to remove a thought by its _id
-app.delete('/api/thoughts/:id', async (req,res) => {
-  let id = req.params.id; // get id from GET query
-  // Perform delete
-  // Also remove thought id from user thoughts array XXXXXXXX
-  let db_results = await Thought.findByIdAndDelete(id);
-  res.json("Thought deleted.")
-});
-
-
 
 
 // /api/thoughts/:thoughtId/reactions
@@ -320,12 +314,18 @@ app.post('/api/thoughts/:thoughtId/reactions', async (req,res) => {
 
   // Don't actually create a standalone reaction record in a reaction table,
   // but a reaction record/document that gets stored in the array in Thoughts
-  // Create the record
-  //await Reaction.create({username: username, email:email});
+  // According to Mongoose docs, create and push the reaction doc at the same time...
+  // Create the reaction object
+  let newReaction = {"username": username, "reactionBody": reactionBody};
+  // Connect to the thought record
+  let thought = await Thought.findById(req.params.thoughtId).exec();
+  console.log(thought);
+  // Push the new reaction onto the thought record
+  await thought.reactions.push(newReaction);
+  // Save the changes in the parent
+  await thought.save();
 
-  // Add the reaction ID to the list of reaction Ids for the thought
-
-
+  // Send response to client
   res.json("Reaction added.");
 
 });
@@ -333,8 +333,42 @@ app.post('/api/thoughts/:thoughtId/reactions', async (req,res) => {
 // DELETE to pull and remove a reaction by the reaction's reactionId value
 
 app.delete('/api/thoughts/:thoughtId/reactions', async (req,res) => {
-  // XXXXXXXXXX
+  let reactionId = req.body.reactionId;
+  let thoughtId = req.params.thoughtId;
+  // Find the thought
+  let thought = await Thought.findById(req.params.thoughtId).exec();
+  // Loop through all reaction documents and find one with a matching reactionId.
+  let _id = null;
+  for (let r of thought.reactions) {
+    // Get the _id of that reaction.
+    if (r.reactionId == reactionId) _id = r._id;
+  }
+
+  if (_id == null) {
+    res.json("No matching reaction found.");
+  } else {
+    // Delete that using the built-in process...
+    await thought.reactions.id(_id).deleteOne();
+    // Save the changes
+    await thought.save();
+    res.json("Reaction deleted....");
+  }
+
 });
+
+
+// Moved here because the system was deleting the entire thought when we
+// were just trying to remove a reaction
+// DELETE to remove a thought by its _id
+app.delete('/api/thoughts/:id', async (req,res) => {
+  let id = req.params.id; // get id from GET query
+  // Perform delete
+  // Also remove thought id from user thoughts array XXXXXXXX
+  let db_results = await Thought.findByIdAndDelete(id);
+  res.json("Thought deleted.")
+});
+
+
 
 
 
@@ -354,5 +388,62 @@ app.listen(3000, () => {
 // THEN I am able to successfully create, update, and delete users and thoughts in my database
 // WHEN I test API POST and DELETE routes in Insomnia
 // THEN I am able to successfully create and delete reactions to thoughts and add and remove friends to a user’s friend list
+
+
+// Deliverables: 10%
+// Your GitHub repository containing your application code.
+// DONE//
+
+// Walkthrough Video: 37%
+// A walkthrough video that demonstrates the functionality of the social media API must be submitted, and a link to the video should be included in your README file.
+
+// The walkthrough video must show all of the technical acceptance criteria being met.
+
+// The walkthrough video must demonstrate how to start the application’s server.
+
+// The walkthrough video must demonstrate GET routes for all users and all thoughts being tested in Insomnia.
+//DONE//
+
+// The walkthrough video must demonstrate GET routes for a single user and a single thought being tested in Insomnia.
+
+// The walkthrough video must demonstrate POST, PUT, and DELETE routes for users and thoughts being tested in Insomnia.
+
+// Walkthrough video must demonstrate POST and DELETE routes for a user’s friend list being tested in Insomnia.
+
+// Walkthrough video must demonstrate POST and DELETE routes for reactions to thoughts being tested in Insomnia.
+
+
+
+// Technical Acceptance Criteria: 40%
+// Satisfies all of the preceding acceptance criteria plus the following:
+
+// Uses the Mongoose packageLinks to an external site. to connect to a MongoDB database. DONE//
+
+// Includes User and Thought models outlined in the Challenge instructions.
+//DONE//
+
+
+// Includes schema settings for User and Thought models as outlined in the Challenge instructions.
+//DONE//
+
+// Includes Reactions as the reaction field's subdocument schema in the Thought model.
+//DONE//
+
+// Uses functionality to format queried timestamps properly.
+
+// Repository Quality: 13%
+// Repository has a unique name.
+//DONE//
+
+// Repository follows best practices for file structure and naming conventions.
+//DONE//
+
+// Repository follows best practices for class/id naming conventions, indentation, quality comments, etc.
+//DONE//
+
+// Repository contains multiple descriptive commit messages.
+//DONE//
+
+// Repository contains a high-quality README with description and a link to a walkthrough video.
 
 
