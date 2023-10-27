@@ -1,6 +1,9 @@
 // Perform needed imports/includes
 const express = require('express')
 const mongoose = require("mongoose");
+const { connect, connection } = require('mongoose');
+
+const PORT = process.env.PORT || 3001;
 
 const app = express();
 app.use(require('body-parser').urlencoded({ extended: false }));
@@ -14,12 +17,21 @@ const connectionString =
 
 // Wait for database to connect, logging an error if there is a problem
 main().catch((err) => console.log(err));
-async function main() {
-  await mongoose.connect(connectionString, {
+ async function main() {
+  connect(connectionString, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+  })
+  const db = mongoose.connection;
+  db.once('open', () => {
+    app.listen(PORT, () => {
+      console.log(`API server running on port ${PORT}!`);
+    });
   });
 }
+
+
+
 
 // SCHEMAS
 
