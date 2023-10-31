@@ -3,7 +3,7 @@ const express = require('express')
 const mongoose = require("mongoose");
 const { connect, connection } = require('mongoose');
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(require('body-parser').urlencoded({ extended: false }));
@@ -196,6 +196,7 @@ app.post('/api/users/', async (req,res) => {
 app.put('/api/users/:id', async (req,res) => {
     // XXXXXXXXXX add error handling
     let id = req.params.id; // get id from GET query
+    console.log(req.body);
     let username = req.body.username.trim(); // get username from body
     let email = req.body.email.trim(); // get email from body
 
@@ -385,10 +386,10 @@ app.delete('/api/thoughts/:id', async (req,res) => {
 
 
 
-// Start the server
-app.listen(3000, () => {
-    console.log("Listen on the port 3000...");
-});
+// // Start the server
+// app.listen(PORT, () => {
+//     console.log("Listen on the port 3000...");
+// });
 
 
 // GIVEN a social network API
@@ -412,11 +413,13 @@ app.listen(3000, () => {
 // The walkthrough video must show all of the technical acceptance criteria being met.
 
 // The walkthrough video must demonstrate how to start the application’s server.
+//DONE//
 
 // The walkthrough video must demonstrate GET routes for all users and all thoughts being tested in Insomnia.
 //DONE//
 
 // The walkthrough video must demonstrate GET routes for a single user and a single thought being tested in Insomnia.
+//DONE//
 
 // The walkthrough video must demonstrate POST, PUT, and DELETE routes for users and thoughts being tested in Insomnia.
 
