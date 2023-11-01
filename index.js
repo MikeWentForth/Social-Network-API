@@ -184,12 +184,20 @@ app.post('/api/users/', async (req,res) => {
   let email = req.body.email.trim();
 
   // Validate data
-  if (username.length == 0) res.json("Username required.")
-  if (email.length == 0) res.json("Email required.")
+  if (username.length == 0) return res.json("Username required.")
+  if (email.length == 0) return res.json("Email required.")
+
+  // See if email already in DB
+  let db_results = await User.find({"email":email});
+  if (db_results.length > 0) return res.json("Email " + email + " already in use in the DB.");
+
+  // See if user is already in the DB
+  db_results = await User.find({"username":username});
+  if (db_results.length > 0) return res.json("User " + username + " is already in the DB.")
 
   // Create the record
   await User.create({username: username, email:email});
-  res.json("User created.");
+  return res.json("User created.");
 });
 
 // PUT to update a user by its _id
@@ -210,6 +218,7 @@ app.put('/api/users/:id', async (req,res) => {
 });
 
 // DELETE to remove user by its _id
+// The id goes in the URL
 app.delete('/api/users/:id/', async (req,res) => {
     // XXXXXXXXXX add error handling
     let id = req.params.id; // get id from GET query
@@ -225,6 +234,9 @@ app.delete('/api/users/:id/', async (req,res) => {
 
 // /api/users/:userId/friends/:friendId
 // POST to add a new friend to a user's friend list
+// Receives in the URL:
+//    The id of the user who is getting a new friend.
+//    The id of the friend to be added to the user.
 app.post('/api/users/:userId/friends/:friendId', async (req,res) => {
 
   // Read the friends ids array from the user's record
@@ -268,6 +280,8 @@ app.get('/api/thoughts', async (req,res) => {
 });
 
 // GET to get a single thought by its _id
+// Receives a thought id in the URL.
+// Returns a JSON object from the thought table with the same id (if exists)
 app.get('/api/thoughts/:id', async (req,res) => {
   // XXXXXXXXXX
   let id = req.params.id;
@@ -278,23 +292,29 @@ app.get('/api/thoughts/:id', async (req,res) => {
 });
 
 // POST to create a new thought 
+// Receives a JSON body object that should contain two properties:
+//      username and theoughtText
+// Returns a JSON string
 // (don't forget to push the created thought's _id to the associated user's thoughts array field)
 app.post('/api/thoughts', async (req,res) => {
   let username = req.body.username.trim();
   let thoughtText = req.body.thoughtText.trim();
   // Validate data
-  if (username.length == 0) res.json("Username required.")
-  if (thoughtText.length == 0) res.json("Thought text required.")
+  if (username.length == 0) return res.json("Username required.")
+  if (thoughtText.length == 0) return res.json("Thought text required.")
   // Need to check whether a corresponding user exists (look for username) XXXXXX
 
   // If the user does not exist, stop.  XXXXXXX
 
   // Create the record
-  await Thought.create({username: username, thoughtText:thoughtText});
+  let newThought = {"username": username, "thoughtText":thoughtText};
+  console.log("Creating new thought: ", newThought);
+  await Thought.create(newThought);
 
   // Add the thought ID to the user's thought array XXXXXX
-  res.json("Thought recorded in the DB.");
+  return res.json("Thought recorded in the DB.");
   });
+  
 
 // PUT to update a thought by its _id
 app.put('/api/thoughts/:id', async (req,res) => {
@@ -422,8 +442,10 @@ app.delete('/api/thoughts/:id', async (req,res) => {
 //DONE//
 
 // The walkthrough video must demonstrate POST, PUT, and DELETE routes for users and thoughts being tested in Insomnia.
+//DONE//
 
 // Walkthrough video must demonstrate POST and DELETE routes for a user’s friend list being tested in Insomnia.
+//DONE//
 
 // Walkthrough video must demonstrate POST and DELETE routes for reactions to thoughts being tested in Insomnia.
 
