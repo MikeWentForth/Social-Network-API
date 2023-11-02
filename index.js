@@ -287,6 +287,12 @@ app.get('/api/thoughts/:id', async (req,res) => {
   let id = req.params.id;
   // await Adventure.findById(id).exec();
   let db_results = await Thought.findById(id).exec();
+
+  // create a new reaction (Reaction.create({ }))
+
+
+  // update thought ( Thought.findByIdAndUpdate({}) )
+
   res.json(db_results);
 
 });
